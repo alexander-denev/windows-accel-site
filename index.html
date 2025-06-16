@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Mouse Acceleration Curve Viewer</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body {
+                font-family: sans-serif;
+                padding: 20px;
+            }
+            input {
+                width: 100px;
+                margin: 5px;
+            }
+        </style>
+        <link rel="icon" type="image/jpeg" href="logo.jpg" />
+    </head>
+    <body>
+        <div style="display: flex; gap: 1vw">
+            <div>
+                <h2>Mouse Acceleration Curve Calculator</h2>
+
+                <div id="inputs">
+                    <p>Enter 5 points (X and Y) in decimal (e.g., 0, 8192, etc):</p>
+                    <div id="points"></div>
+                    <button onclick="updateChart()">Update Chart</button>
+                    <button onclick="convertToHex()">Show Registry Hex</button>
+                    <br /><br />
+                    <textarea
+                        id="hexInput"
+                        rows="8"
+                        cols="80"
+                        placeholder="Paste registry hex here to parse"
+                    ></textarea
+                    ><br />
+                    <button onclick="parseHex()">Parse Hex</button>
+                    <pre id="output"></pre>
+                </div>
+            </div>
+
+            <div style="height: 95vh; flex: 1">
+                <canvas id="curveChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+
+        <script>
+            const pointContainer = document.getElementById("points")
+            const output = document.getElementById("output")
+
+            // Generate inputs for 5 points
+            for (let i = 0; i < 5; i++) {
+                pointContainer.innerHTML += `
+        <div>
+          Point ${i + 1}: 
+          X: <input type="number" id="x${i}" value="${i * 65536}" /> 
+          Y: <input type="number" id="y${i}" value="${i * 65536}" />
+        </div>
+      `
+            }
+
+            const ctx = document.getElementById("curveChart").getContext("2d")
+            const chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: "Pointer Acceleration Curve",
+                            data: [],
+                            fill: false,
+                            borderColor: "blue",
+                            tension: 0.1,
+                        },
+                    ],
+                },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: "Mouse Movement (X)" } },
+                        y: { title: { display: true, text: "Pointer Response (Y)" } },
+                    },
+                },
+            })
+
+            function updateChart() {
+                const data = []
+                for (let i = 0; i < 5; i++) {
+                    const x = parseInt(document.getElementById(`x${i}`).value)
+                    const y = parseInt(document.getElementById(`y${i}`).value)
+                    data.push({ x: x, y: y })
+                }
+                // Sort data by x value to ensure correct line rendering
+                data.sort((a, b) => a.x - b.x)
+                chart.data.datasets[0].data = data
+                chart.options.scales.x.type = "linear"
+                chart.options.scales.x.title = { display: true, text: "Mouse Movement (X)" }
+                chart.options.scales.y.title = { display: true, text: "Pointer Response (Y)" }
+                chart.update()
+            }
+
+            function toHexLittleEndian(num) {
+                return [...Array(4)]
+                    .map((_, i) => {
+                        return ("00" + ((num >> (i * 8)) & 0xff).toString(16)).slice(-2)
+                    })
+                    .join(",")
+            }
+
+            // Parse registry hex and fill the X/Y fields
+            function parseHex() {
+                const hexText = document.getElementById("hexInput").value
+                // Extract all hex byte pairs (ignore line breaks, spaces, etc.)
+                const hexMatches = hexText.match(/([0-9a-fA-F]{2})/g)
+                if (!hexMatches || hexMatches.length < 80) {
+                    alert(
+                        "Could not find enough hex bytes (need at least 80).\nPaste the full registry hex for both X and Y curves."
+                    )
+                    return
+                }
+                // Parse X values (first 5 points, 8 bytes each)
+                for (let i = 0; i < 5; i++) {
+                    // Each point: 8 bytes, first 4 are value (little-endian)
+                    const idx = i * 8
+                    const bytes = hexMatches.slice(idx, idx + 4)
+                    const val = parseInt(bytes.reverse().join(""), 16)
+                    document.getElementById(`x${i}`).value = val
+                }
+                // Parse Y values (next 5 points, 8 bytes each)
+                for (let i = 0; i < 5; i++) {
+                    const idx = 40 + i * 8
+                    const bytes = hexMatches.slice(idx, idx + 4)
+                    const val = parseInt(bytes.reverse().join(""), 16)
+                    document.getElementById(`y${i}`).value = val
+                }
+                updateChart()
+            }
+            // ...existing code...
+            function convertToHex() {
+                let hex = '"SmoothMouseXCurve"=hex:\\\n'
+                for (let i = 0; i < 5; i++) {
+                    const x = parseInt(document.getElementById(`x${i}`).value)
+                    hex += "  " + toHexLittleEndian(x) + ",00,00,00,00,00,00,\\\n"
+                }
+                hex = hex.slice(0, -2) + '\n\n"SmoothMouseYCurve"=hex:\\\n'
+                for (let i = 0; i < 5; i++) {
+                    const y = parseInt(document.getElementById(`y${i}`).value)
+                    hex += "  " + toHexLittleEndian(y) + ",00,00,00,00,00,00,\\\n"
+                }
+                output.textContent = hex.slice(0, -2)
+            }
+            // ...existing code...
+
+            updateChart()
+        </script>
+    </body>
+</html>
