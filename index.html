@@ -139,12 +139,12 @@
                 let hex = '"SmoothMouseXCurve"=hex:\\\n'
                 for (let i = 0; i < 5; i++) {
                     const x = parseInt(document.getElementById(`x${i}`).value)
-                    hex += "  " + toHexLittleEndian(x) + ",00,00,00,00,00,00,\\\n"
+                    hex += "  " + toHexLittleEndian(x) + ",00,00,00,00,\\\n"
                 }
                 hex = hex.slice(0, -2) + '\n\n"SmoothMouseYCurve"=hex:\\\n'
                 for (let i = 0; i < 5; i++) {
                     const y = parseInt(document.getElementById(`y${i}`).value)
-                    hex += "  " + toHexLittleEndian(y) + ",00,00,00,00,00,00,\\\n"
+                    hex += "  " + toHexLittleEndian(y) + ",00,00,00,00,\\\n"
                 }
                 output.textContent = hex.slice(0, -2)
             }
