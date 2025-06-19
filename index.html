@@ -104,14 +104,16 @@
                 for (let i = 0; i < 5; i++) {
                     const x = parseInt(document.getElementById(`x${i}`).value)
                     const y = parseInt(document.getElementById(`y${i}`).value)
-                    data.push({ x: x, y: y })
+                    if (x === 0) continue; // skip zero to avoid division by zero
+                    data.push({ x: x, y: y / x })
                 }
                 // Sort data by x value to ensure correct line rendering
                 data.sort((a, b) => a.x - b.x)
                 chart.data.datasets[0].data = data
+                chart.data.datasets[0].label = 'Acceleration Multiplier (Y/X)'
                 chart.options.scales.x.type = "linear"
-                chart.options.scales.x.title = { display: true, text: "Mouse Movement (X)" }
-                chart.options.scales.y.title = { display: true, text: "Pointer Response (Y)" }
+                chart.options.scales.x.title = { display: true, text: "Mouse Speed (X)" }
+                chart.options.scales.y.title = { display: true, text: "Acceleration Multiplier (Y/X)" }
                 chart.update()
             }
 
@@ -131,9 +133,6 @@
                     /(?<="SmoothMouse[XY]Curve"\D*(?:[0-9a-fA-F]{2}[,\\\n\s]*){0,39})([0-9a-fA-F]{2})/g
                 )
                 if (!hexMatches || hexMatches.length < 80) {
-                    alert(
-                        "Could not find enough hex bytes (need at least 80).\nPaste the full registry hex for both X and Y curves."
-                    )
                     return
                 }
                 // Parse X values (first 5 points, 8 bytes each)
