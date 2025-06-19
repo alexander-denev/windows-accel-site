@@ -25,7 +25,6 @@
                     <p>Enter 5 points (X and Y) in decimal (e.g., 0, 8192, etc):</p>
                     <div id="points"></div>
                     <button onclick="updateChart()">Update Chart</button>
-                    <button onclick="convertToHex()">Show Registry Hex</button>
                     <br /><br />
                     <textarea
                         id="hexInput"
@@ -34,7 +33,7 @@
                         placeholder="Paste registry hex here to parse"
                     ></textarea
                     ><br />
-                    <button onclick="parseHex()" style='margin-bottom: 10px;'>Parse Hex</button>
+                    <button onclick="parseHex()" style="margin-bottom: 10px">Parse Hex</button>
                     <div
                         id="dropArea"
                         style="
@@ -43,10 +42,16 @@
                             text-align: center;
                             background: #f8f8f8;
                             cursor: pointer;
+                            margin-bottom: 15px;
                         "
                     >
                         Drag & drop a registry/text file here to parse
                     </div>
+                    <button onclick="convertToHex()">Show Registry Hex</button>
+                    <button onclick="copyHex()">Copy</button>
+                    <button onclick="convertToHex(); copyHex(); console.log('a message')">
+                        Show then Copy
+                    </button>
                     <pre id="output"></pre>
                 </div>
             </div>
@@ -160,6 +165,12 @@
                     hex += "  " + toHexLittleEndian(y) + ",00,00,00,00,\\\n"
                 }
                 output.textContent = hex.slice(0, -2)
+            }
+            function copyHex() {
+                const output = document.getElementById("output")
+                if (output.textContent.trim()) {
+                    navigator.clipboard.writeText(output.textContent)
+                }
             }
 
             // Drag and drop support
