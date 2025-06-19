@@ -34,12 +34,24 @@
                         placeholder="Paste registry hex here to parse"
                     ></textarea
                     ><br />
-                    <button onclick="parseHex()">Parse Hex</button>
+                    <button onclick="parseHex()" style='margin-bottom: 10px;'>Parse Hex</button>
+                    <div
+                        id="dropArea"
+                        style="
+                            border: 2px dashed #888;
+                            padding: 48px 16px;
+                            text-align: center;
+                            background: #f8f8f8;
+                            cursor: pointer;
+                        "
+                    >
+                        Drag & drop a registry/text file here to parse
+                    </div>
                     <pre id="output"></pre>
                 </div>
             </div>
 
-            <div style="height: 95vh; flex: 1">
+            <div style="height: 93vh; flex: 1">
                 <canvas id="curveChart" width="400" height="400"></canvas>
             </div>
         </div>
@@ -110,7 +122,9 @@
             function parseHex() {
                 const hexText = document.getElementById("hexInput").value
                 // Extract all hex byte pairs (ignore line breaks, spaces, etc.)
-                const hexMatches = hexText.match(/([0-9a-fA-F]{2})/g)
+                const hexMatches = hexText.match(
+                    /(?<="SmoothMouse[XY]Curve"\D*(?:[0-9a-fA-F]{2}[,\\\n\s]*){0,39})([0-9a-fA-F]{2})/g
+                )
                 if (!hexMatches || hexMatches.length < 80) {
                     alert(
                         "Could not find enough hex bytes (need at least 80).\nPaste the full registry hex for both X and Y curves."
@@ -134,7 +148,6 @@
                 }
                 updateChart()
             }
-            // ...existing code...
             function convertToHex() {
                 let hex = '"SmoothMouseXCurve"=hex:\\\n'
                 for (let i = 0; i < 5; i++) {
@@ -148,7 +161,30 @@
                 }
                 output.textContent = hex.slice(0, -2)
             }
-            // ...existing code...
+
+            // Drag and drop support
+            const dropArea = document.getElementById("dropArea")
+            const hexInput = document.getElementById("hexInput")
+            dropArea.addEventListener("dragover", function (e) {
+                e.preventDefault()
+                dropArea.style.background = "#e0e0e0"
+            })
+            dropArea.addEventListener("dragleave", function (e) {
+                dropArea.style.background = "#f8f8f8"
+            })
+            dropArea.addEventListener("drop", function (e) {
+                e.preventDefault()
+                dropArea.style.background = "#f8f8f8"
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0]
+                    const reader = new FileReader()
+                    reader.onload = function (evt) {
+                        hexInput.value = evt.target.result
+                        parseHex()
+                    }
+                    reader.readAsText(file)
+                }
+            })
 
             updateChart()
         </script>
